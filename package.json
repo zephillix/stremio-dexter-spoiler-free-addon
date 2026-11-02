@@ -1,0 +1,9 @@
+{
+  "name": "dexter-spoiler-free-stremio-addon",
+  "version": "1.0.0",
+  "description": "Stremio addon that replaces spoiler-ish episode thumbnails for Dexter, New Blood, Original Sin and Resurrection.",
+  "main": "index.js",
+  "scripts": { "start": "node index.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "jpeg-js": "^0.4.4" }
+}
