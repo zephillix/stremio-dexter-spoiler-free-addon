@@ -1,9 +1,8 @@
 # Dexter Spoiler-Free Thumbnails (Stremio addon)
 
-Swaps the episode thumbnails for Dexter, Dexter: New Blood, Dexter: Original Sin and Dexter: Resurrection
-with spoiler-free stills. Titles, descriptions and streams are untouched.
+A fanmade Stremio addon that is made to replace all of the current spoiler-ish episode images for the shows: Dexter, Dexter: New Blood, Dexter: Original Sin and Dexter: Resurrection.
 
-This product uses the TMDB API but is not endorsed or certified by TMDB.
+**Vibecoded by Claude.**
 
 ## How people find and open it
 Stremio asks addons in order and Cinemeta usually answers first for the normal Dexter entry, so this addon
