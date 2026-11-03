@@ -4,6 +4,9 @@ A fanmade Stremio addon that is made to replace all of the current spoiler-ish e
 
 **Vibecoded by Claude.**
 
+## Install
+Please install it here: https://stremio-dexter-spoiler-free-addon.onrender.com/manifest.json
+
 ## How people find and open it
 Stremio asks addons in order and Cinemeta usually answers first for the normal Dexter entry, so this addon
 has its own entries (ids starting with `dxs:`, which only this addon answers):
