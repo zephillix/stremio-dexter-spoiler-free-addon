@@ -33,6 +33,16 @@ let matches = {};
 try { matches = JSON.parse(fs.readFileSync(MATCH_FILE, 'utf8')); } catch (e) { matches = {}; }
 const saveMatches = () => { try { fs.writeFileSync(MATCH_FILE, JSON.stringify(matches)); } catch (e) { console.warn('could not save matches:', e.message); } };
 
+// revisions.json lists episodes whose reference picture changed. Their saved match is dropped once, then matched again.
+let REV = {};
+try { REV = JSON.parse(fs.readFileSync(path.join(__dirname, 'revisions.json'), 'utf8')); } catch (e) { REV = {}; }
+matches.__rev = (matches.__rev && typeof matches.__rev === 'object') ? matches.__rev : {};
+let dropped = 0;
+for (const [k, rev] of Object.entries(REV)) {
+  if (matches.__rev[k] !== rev) { if (matches[k]) dropped++; delete matches[k]; matches.__rev[k] = rev; }
+}
+if (Object.keys(REV).length) saveMatches();
+
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
 // ---------- TMDB ----------
@@ -48,6 +58,7 @@ const resolveImdbIds = async () => {
     const d = await tmdb(`/tv/${tmdbId}/external_ids`);
     if (d && d.imdb_id) imdbToTmdb.set(d.imdb_id, tmdbId);
   }
+  if (dropped) log(`${dropped} saved match(es) dropped because their reference picture changed - matching them again`);
   log('serving metadata for', [...imdbToTmdb.entries()].map(([i, t]) => `${i} (tmdb ${t})`).join(', '));
 };
 
@@ -175,13 +186,18 @@ const send = (res, code, body, extra = {}) => {
 
 const manifest = () => ({
   id: 'community.dexter.spoilerfree',
-  version: '1.2.0',
+  version: '1.3.1',
   name: 'Dexter Spoiler-Free Thumbnails',
   description: 'Replaces spoiler-ish episode thumbnails for Dexter, New Blood, Original Sin and Resurrection. Open them from the "Dexter (Spoiler-Free)" catalog. This product uses the TMDB API but is not endorsed or certified by TMDB.',
   resources: ['catalog', 'meta'],
   types: ['series'],
   idPrefixes: [...imdbToTmdb.keys(), OWN_PREFIX],
-  catalogs: [{ type: 'series', id: 'dexter-spoilerfree', name: 'Dexter (Spoiler-Free)', extra: [{ name: 'search', isRequired: false }] }]
+  catalogs: [{ type: 'series', id: 'dexter-spoilerfree', name: 'Dexter (Spoiler-Free)', extra: [{ name: 'search', isRequired: false }] }],
+  // ownership proof for stremio-addons.net
+  stremioAddonsConfig: {
+    issuer: 'https://stremio-addons.net',
+    signature: 'eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0..NDDR-F4iEB1dGs0eTivZdA.3f0Qc975MzdHjHAhS24BoANedGnY83yDZJp8wAQwyIyIiALLQ1xf38wLaLMvP0uFTRGFC2Kd0rtaATXzKDuz16qqbhgcrSpU0XkcBJF-IMLwXnnzAczvKIiXTYT09hpH.F-Io79pekRs5tA7nvk3nMQ'
+  }
 });
 
 const server = http.createServer(async (req, res) => {
@@ -190,6 +206,7 @@ const server = http.createServer(async (req, res) => {
     const p = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
 
     if (p === '/health') return send(res, 200, { ok: true });
+    if (p === '/matches.json') return send(res, 200, matches);     // lets you copy the finished matches into GitHub without running anything locally
     if (p === '/manifest.json') return send(res, 200, manifest());
 
     if (p === '/') {
@@ -218,7 +235,7 @@ a.btn.alt{background:#2b2826;color:#fff}code{background:#2b2826;padding:2px 6px;
 
     if (p === '/status') {
       const total = Object.values(FP).reduce((n, s) => n + Object.values(s).reduce((m, e) => m + Object.keys(e).length, 0), 0);
-      return send(res, 200, { matched: Object.keys(matches).length, total, matching: !!warming, shows: Object.fromEntries(imdbToTmdb), lastMetaRequests: recent });
+      return send(res, 200, { matched: Object.keys(matches).filter(k => k !== '__rev').length, total, matching: !!warming, shows: Object.fromEntries(imdbToTmdb), lastMetaRequests: recent });
     }
 
     const cat = p.match(/^\/catalog\/series\/dexter-spoilerfree(?:\/(.*))?\.json$/);
@@ -234,6 +251,7 @@ a.btn.alt{background:#2b2826;color:#fff}code{background:#2b2826;padding:2px 6px;
         if (tokens.length && !tokens.every(tk => hay.includes(tk))) continue;     // search: every word must appear
         metas.push({ id: OWN_PREFIX + imdb, type: 'series', name: cm.name, poster: cm.poster, background: cm.background, releaseInfo: cm.releaseInfo });
       }
+      log(`catalog request: search="${extra.search || ''}" -> ${metas.length} result(s)`);
       return send(res, 200, { metas }, { 'Cache-Control': 'max-age=300' });
     }
 
