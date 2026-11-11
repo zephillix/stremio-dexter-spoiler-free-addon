@@ -186,7 +186,7 @@ const send = (res, code, body, extra = {}) => {
 
 const manifest = () => ({
   id: 'community.dexter.spoilerfree',
-  version: '1.3.1',
+  version: '1.3.0',
   name: 'Dexter Spoiler-Free Thumbnails',
   description: 'Replaces spoiler-ish episode thumbnails for Dexter, New Blood, Original Sin and Resurrection. Open them from the "Dexter (Spoiler-Free)" catalog. This product uses the TMDB API but is not endorsed or certified by TMDB.',
   resources: ['catalog', 'meta'],
@@ -206,7 +206,6 @@ const server = http.createServer(async (req, res) => {
     const p = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
 
     if (p === '/health') return send(res, 200, { ok: true });
-    if (p === '/matches.json') return send(res, 200, matches);     // lets you copy the finished matches into GitHub without running anything locally
     if (p === '/manifest.json') return send(res, 200, manifest());
 
     if (p === '/') {
